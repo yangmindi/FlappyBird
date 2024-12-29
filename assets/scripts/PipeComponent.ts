@@ -6,12 +6,16 @@ const { ccclass, property } = _decorator;
 export class PipeComponent extends Component {
 
     private moveSpeed: number = 100;
+    private enableUpdate: boolean = true;
 
     start() {
         this.moveSpeed = GameManager.shared().moveSpeed;
     }
 
     update(deltaTime: number) {
+        if (!this.enableUpdate) {
+            return;
+        }
         // 管道位置更新
         const pipe = this.node.getPosition();
         const moveDistance = deltaTime * this.moveSpeed;
@@ -20,6 +24,10 @@ export class PipeComponent extends Component {
         if (pipe.x < -900) {
             this.node.destroy();
         }
+    }
+
+    pause() {
+        this.enableUpdate = false;
     }
 }
 

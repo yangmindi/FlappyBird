@@ -1,4 +1,5 @@
 import { _decorator, Component, instantiate, Node, Prefab, math } from 'cc';
+import { PipeComponent } from './PipeComponent';
 const { ccclass, property } = _decorator;
 
 @ccclass('PipeSpawner')
@@ -32,6 +33,12 @@ export class PipeSpawner extends Component {
 
     public pause() {
         this._isSpawner = false;
+        this.node.children.forEach(child => {
+            const pipe = child.getComponent(PipeComponent)
+            if (pipe) {
+                pipe.pause();
+            }
+        });
     }
 
     public play() {

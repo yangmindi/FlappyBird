@@ -1,6 +1,7 @@
-import { _decorator, Component, Input, input, Node, RigidBody2D, Vec2, Vec3, math, Collider2D, Contact2DType, IPhysics2DContact, Animation } from 'cc';
+import { _decorator, Component, Input, input, Node, RigidBody2D, Vec2, Vec3, math, Collider2D, Contact2DType, IPhysics2DContact, Animation, AudioClip } from 'cc';
 import { Tags } from './Tags';
 import { GameManager } from './GameManager';
+import { AudioMgr } from './AudioMgr';
 const { ccclass, property } = _decorator;
 
 @ccclass('Bird')
@@ -15,6 +16,9 @@ export class Bird extends Component {
     // 旋转角度
     @property
     rotateSpeed: number = 30;
+
+    @property(AudioClip)
+    clickAudio: AudioClip = null;
 
     onLoad() {
         input.on(Input.EventType.TOUCH_START, this.onTouchStart, this);
@@ -39,6 +43,7 @@ export class Bird extends Component {
         this.rgd2D.linearVelocity = new Vec2(0, 10); // 数值代表xx像素/s
         // 向上旋转角度
         this.node.angle = 30;
+        AudioMgr.inst.playOneShot(this.clickAudio);
     }
 
     protected update(dt: number): void {
@@ -62,9 +67,16 @@ export class Bird extends Component {
         this._canControl = false;
     }
 
+    disableControlNotRGD() {
+        this.getComponent(Animation).enabled = false;
+        this._canControl = false;
+    }
+
     onBeginContact (selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact | null) {
-        // 只在两个碰撞体开始接触时被调用一次
-        console.log(otherCollider.tag);
+        // 游戏结束状态
+        if (otherCollider.tag == Tags.LAND || otherCollider.tag == Tags.PIPE) {
+            GameManager.shared().transitionToGameOverState();
+        }
     }
 
     onEndContact (selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact | null) {

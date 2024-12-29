@@ -1,9 +1,11 @@
-import { _decorator, Component, Label, Node } from 'cc';
+import { _decorator, AudioClip, Component, Game, Label, Node } from 'cc';
 import { Bird } from './Bird';
 import { MoveComponent } from './MoveComponent'
 import { PipeSpawner } from './PipeSpawner';
 import { GameReadyUI } from './UI/GameReadyUI';
 import { GameData } from './GameData';
+import { GameOverUI } from './UI/GameOverUI';
+import { AudioMgr } from './AudioMgr';
 const { ccclass, property } = _decorator;
 
 enum GameState {
@@ -47,12 +49,22 @@ export class GameManager extends Component {
     @property(Label)
     scoreLabel: Label = null
 
+    @property(GameOverUI)
+    gameOverUI: GameOverUI = null;
+
+    @property(AudioClip)
+    bgAudio:AudioClip = null; 
+
+    @property(AudioClip)
+    gameOverAudio:AudioClip = null; 
+
     onLoad() {
         GameManager._shared = this;
     }
 
     protected start(): void {
         this.transitionToReadyState();
+        AudioMgr.inst.play(this.bgAudio, 0.1); 
     }
 
     transitionToReadyState() {
@@ -62,6 +74,8 @@ export class GameManager extends Component {
         this.landMoving.disableMove();
         this.pipeSpawner.pause();
         this.gamingUI.active = false;
+        this.gameOverUI.hide();
+        this.gameReadyUI.node.active = true;
     }
 
     transitionToGamingState() {
@@ -75,14 +89,24 @@ export class GameManager extends Component {
     }
 
     transitionToGameOverState() {
+        if (this.currentGS == GameState.GAMEOVER) {
+            return;
+        }
         this.currentGS = GameState.GAMEOVER;
+        this.bird.disableControlNotRGD();
+        this.bgMoving.disableMove();
+        this.landMoving.disableMove();
+        this.pipeSpawner.pause();
+        this.gamingUI.active = false;
+        this.gameOverUI.show(GameData.getScore(),GameData.getBestScore()); 
+        GameData.setBestScore();   
+        AudioMgr.inst.stop();
+        AudioMgr.inst.playOneShot(this.gameOverAudio);
     }
 
     addScore(score:number=1) {
         GameData.addScore(score);
         this.scoreLabel.string = GameData.getScore().toString();
     }
-
-    
 }
 
